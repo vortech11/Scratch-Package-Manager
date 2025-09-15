@@ -75,8 +75,8 @@ def installPackage(repo, required=False):
 
     for package in installedPackages[packageName]["dependencies"]:
         if not package in installedPackages:
-            if package in packageAlias:
-                packageReference = installPackage(packageAlias[package])
+            if package in repoAlias:
+                packageReference = installPackage(repoAlias[package])
             else:
                 packageReference = installPackage(package)
         else:
