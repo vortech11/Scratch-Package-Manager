@@ -23,8 +23,8 @@ def replaceRepo(dirPath: Path, repo, branch="Main"):
 
 def pullRepo(repo: Path):
     if repo.is_dir():
-        repo = Repo(repo)
-        origin = repo.remote()
+        repo: Repo = Repo(repo)
+        origin: Repo = repo.remote()
 
         origin.fetch()
 
@@ -45,9 +45,8 @@ def getNewest(dirPath: Path, repo, branch="main"):
 def checkRepoInstallation(repo):
     return any([True for package in installedPackages if installedPackages[package]["repo"] == repo])
 
-def installPackage(repo, required=False):
+def installPackage(repo, version="Latest", required=False):
     if checkRepoInstallation(repo) == True:
-        print("HIII")
         return
 
     packageName = f"p{packageNum}"
@@ -87,7 +86,7 @@ def installPackage(repo, required=False):
 
 getNewest(packageNameDir, managerRepo, "Verified-Packages")
 
-with open("./PackageNames/packages.csv") as csv_file:
+with open(packageNameDir / "packages.csv") as csv_file:
     csv_read = csv.reader(csv_file, delimiter=",")
     for row in csv_read:
         repoAlias[row[0]] = row[1]
@@ -95,9 +94,9 @@ with open("./PackageNames/packages.csv") as csv_file:
 with open("./packageWeb.json") as json_file:
     installedPackages = json.load(json_file)
 
-Path("./Packages").mkdir(exist_ok=True)
+packageDir.mkdir(exist_ok=True)
 
-installPackage(repoAlias["TestPackage"], True)
+installPackage(repoAlias["TestPackage"], required=True)
 
 print(repoAlias)
 print(installedPackages)
