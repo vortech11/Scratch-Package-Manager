@@ -5,11 +5,15 @@ import csv
 import json
 
 packageNameDir = Path("./PackageNames")
+packageDir = Path("./Packages")
 
-managerRepo = "https://github.com/vortech11/Scratch-Package-Manager.git"
+
+managerRepo = Repo(Path(".")).remotes.origin.url
 
 repoAlias = {}
 installedPackages = {}
+
+packageNum = 0
 
 def replaceRepo(dirPath: Path, repo, branch="Main"):
     if dirPath.is_dir(): 
@@ -32,12 +36,54 @@ def pullRepo(repo: Path):
         
         repo.remotes.origin.pull()
 
-def getNewest(dirPath: Path, repo, branch):
+def getNewest(dirPath: Path, repo, branch="main"):
     if not dirPath.is_dir():
         replaceRepo(dirPath, repo, branch)
     else:
         pullRepo(dirPath)
 
+def checkRepoInstallation(repo):
+    return any([True for package in installedPackages if installedPackages[package]["repo"] == repo])
+
+def installPackage(repo, required=False):
+    if checkRepoInstallation(repo) == True:
+        print("HIII")
+        return
+
+    packageName = f"p{packageNum}"
+    getNewest(packageDir / packageName, repo)
+    newName = ""
+    version = ""
+    dependencies = {}
+    with open(packageDir / packageName / "spmMeta.json") as f:
+        data = json.load(f)
+        version = str(data["version"])
+        newName = str(data["name"]) + version
+        dependencies = data["dependencies"]
+
+    shutil.move(packageDir / packageName, packageDir / newName)
+
+    packageName = newName
+
+    installedPackages[packageName] = {
+        "repo":Repo(packageDir / packageName).remotes.origin.url,
+        "version":version,
+        "dependencies":dependencies,
+        "references":[],
+        "required": required
+    }
+
+    for package in installedPackages[packageName]["dependencies"]:
+        if not package in installedPackages:
+            if package in packageAlias:
+                packageReference = installPackage(packageAlias[package])
+            else:
+                packageReference = installPackage(package)
+        else:
+            packageReference = package    
+        installedPackages[packageReference]["references"].append(packageName)
+
+    return packageName
 
 getNewest(packageNameDir, managerRepo, "Verified-Packages")
 
@@ -48,6 +94,10 @@ with open("./PackageNames/packages.csv") as csv_file:
 
 with open("./packageWeb.json") as json_file:
     installedPackages = json.load(json_file)
+
+Path("./Packages").mkdir(exist_ok=True)
+
+installPackage(repoAlias["TestPackage"], True)
 
 print(repoAlias)
 print(installedPackages)
